@@ -1,743 +1,777 @@
-/* ==========================================
-   CONFIGURACIÓN PRINCIPAL DE GOMIX
-========================================== */
-
 const DEFAULTS = {
 
-    name: "Vaso Gomix Original",
+  name: "Vaso Gomix Original",
 
-    price: 5000,
+  price: 5000,
 
-    desc:
-        "Mango fresco + gomitas variadas + chamoy + Tajín + pimienta.",
+  desc:
+    "Mango fresco + gomitas variadas + chamoy + Tajín + pimienta.",
 
-    slogan:
-        "El toque ácido y picante que te alegra el día."
+  slogan:
+    "El toque ácido y picante que te alegra el día."
 
 };
 
 
-/*
-    🔐 CONTRASEÑA DEL ADMINISTRADOR
-
-    Puedes cambiarla por la que quieras.
-*/
+/* CONTRASEÑA DEL ADMIN */
 
 const ADMIN_PASSWORD = "Gomix2026!";
 
 
-/* ==========================================
-   DATOS
-========================================== */
+/* DATOS */
 
 let settings =
-    JSON.parse(
-        localStorage.getItem("gomixSettings")
-    ) ||
-    { ...DEFAULTS };
+  JSON.parse(
+    localStorage.getItem("gomixSettings")
+  ) || {...DEFAULTS};
 
 
 let cart =
-    JSON.parse(
-        localStorage.getItem("gomixCart")
-    ) ||
-    [];
+  JSON.parse(
+    localStorage.getItem("gomixCart")
+  ) || [];
 
 
-/* ==========================================
-   FUNCIONES BÁSICAS
-========================================== */
+/* ATAJO */
 
-const $ = id =>
-    document.getElementById(id);
+const $ = selector =>
+  document.querySelector(selector);
 
 
-function money(number) {
+/* MONEDA */
 
-    return "$" +
-        Number(number).toLocaleString("es-CO") +
-        " COP";
+function money(number){
 
-}
-
-
-function escapeHTML(text) {
-
-    return String(text).replace(
-        /[&<>"']/g,
-
-        character => ({
-
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-
-        }[character])
-
-    );
+  return new Intl.NumberFormat(
+    "es-CO",
+    {
+      style:"currency",
+      currency:"COP",
+      maximumFractionDigits:0
+    }
+  ).format(number);
 
 }
 
 
-/* ==========================================
-   ACTUALIZAR INFORMACIÓN
-========================================== */
+/* SEGURIDAD PARA TEXTO */
 
-function applySettings() {
+function escapeHTML(text){
 
-    $("productName").textContent =
-        settings.name;
+  return String(text).replace(
+    /[&<>"']/g,
+    character => {
 
+      const entities = {
 
-    $("productDesc").textContent =
-        settings.desc;
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
 
+      };
 
-    $("productPrice").textContent =
-        money(settings.price)
-            .replace(" COP", "");
+      return entities[character];
 
-
-    $("heroPrice").textContent =
-        money(settings.price);
-
-
-    $("total").textContent =
-        money(
-            (+$("qty").value || 1) *
-            settings.price
-        );
-
-
-    $("eName").value =
-        settings.name;
-
-
-    $("ePrice").value =
-        settings.price;
-
-
-    $("eDesc").value =
-        settings.desc;
-
-
-    $("eSlogan").value =
-        settings.slogan;
+    }
+  );
 
 }
 
 
-/* ==========================================
-   GUARDAR CONFIGURACIÓN
-========================================== */
+/* GUARDAR CONFIGURACIÓN */
 
-function saveSettings() {
+function saveSettings(){
 
-    localStorage.setItem(
-        "gomixSettings",
-        JSON.stringify(settings)
-    );
-
-    applySettings();
+  localStorage.setItem(
+    "gomixSettings",
+    JSON.stringify(settings)
+  );
 
 }
 
 
-/* ==========================================
-   ABRIR / CERRAR VENTANAS
-========================================== */
+/* GUARDAR CARRITO */
 
-function overlay(id, open = true) {
+function saveCart(){
 
-    $(id).classList.toggle(
-        "open",
-        open
-    );
+  localStorage.setItem(
+    "gomixCart",
+    JSON.stringify(cart)
+  );
 
 }
 
 
-/* ==========================================
-   NOTIFICACIONES
-========================================== */
+/* ACTUALIZAR PRODUCTO */
 
-function toast(message) {
+function applySettings(){
 
-    const element =
-        $("toast");
+  $("#productName").textContent =
+    settings.name;
 
+  $("#productDesc").textContent =
+    settings.desc;
 
-    element.textContent =
-        message;
-
-
-    element.classList.add(
-        "show"
-    );
+  $("#productPrice").textContent =
+    money(settings.price) + " COP";
 
 
-    setTimeout(
-        () => {
-
-            element.classList.remove(
-                "show"
-            );
-
-        },
-
-        2000
-    );
+  $("#orderTotal").textContent =
+    money(
+      settings.price *
+      Number($("#qty").value || 1)
+    ) + " COP";
 
 }
 
 
-/* ==========================================
-   MENÚ
-========================================== */
+/* NOTIFICACIÓN */
 
-$("menu").onclick = () => {
+function toast(message){
 
-    $("nav").classList.toggle(
-        "open"
+  const toastBox =
+    $("#toast");
+
+  toastBox.textContent =
+    message;
+
+  toastBox.classList.add("show");
+
+  setTimeout(
+    () =>
+      toastBox.classList.remove("show"),
+    2200
+  );
+
+}
+
+
+/* MENU */
+
+$("#menuBtn").addEventListener(
+  "click",
+  () =>
+    $("#nav").classList.toggle("open")
+);
+
+
+document
+  .querySelectorAll("nav a")
+  .forEach(link => {
+
+    link.addEventListener(
+      "click",
+      () =>
+        $("#nav").classList.remove("open")
     );
 
-};
+  });
 
 
-/* ==========================================
-   CARRITO
-========================================== */
+/* AGREGAR AL CARRITO */
 
-$("add").onclick = () => {
+$("#addCart").addEventListener(
+  "click",
+  () => {
 
-    let product =
-        cart.find(
-            item =>
-                item.name === settings.name
-        );
+    const existing =
+      cart.find(
+        product =>
+          product.name === settings.name
+      );
 
 
-    if (product) {
+    if(existing){
 
-        product.qty++;
+      existing.qty++;
 
-    } else {
+    }else{
 
-        cart.push({
+      cart.push({
 
-            name: settings.name,
+        name:settings.name,
 
-            price: settings.price,
+        price:settings.price,
 
-            qty: 1
+        qty:1
 
-        });
+      });
 
     }
 
 
-    localStorage.setItem(
-        "gomixCart",
-        JSON.stringify(cart)
-    );
-
+    saveCart();
 
     renderCart();
 
-
     toast(
-        "Agregado al carrito 🥭"
+      "¡Vaso Gomix agregado! 🔥"
     );
 
-};
+  }
+);
 
 
-/* ==========================================
-   MOSTRAR CARRITO
-========================================== */
+/* MOSTRAR CARRITO */
 
-function renderCart() {
+function renderCart(){
 
-    const count =
-        cart.reduce(
-            (sum, item) =>
-                sum + item.qty,
-            0
+  const totalProducts =
+    cart.reduce(
+      (total, product) =>
+        total + product.qty,
+      0
+    );
+
+
+  $("#cartCount").textContent =
+    totalProducts;
+
+
+  const box =
+    $("#cartItems");
+
+
+  if(!cart.length){
+
+    box.innerHTML =
+      `
+      <p style="
+        color:#9ba69a;
+        margin-top:25px;
+      ">
+        Tu carrito está vacío.
+      </p>
+      `;
+
+    $("#cartTotal").textContent =
+      "$0 COP";
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    cart.map(
+      (product,index) => `
+
+      <div class="drawer-item">
+
+        <div>
+
+          <h4>
+            ${escapeHTML(product.name)}
+          </h4>
+
+          <small>
+            ${money(product.price)} COP
+          </small>
+
+        </div>
+
+
+        <div class="quantity">
+
+          <button
+            onclick="changeQty(${index},-1)"
+          >
+            −
+          </button>
+
+          <b>
+            ${product.qty}
+          </b>
+
+          <button
+            onclick="changeQty(${index},1)"
+          >
+            +
+          </button>
+
+          <button
+            onclick="removeItem(${index})"
+          >
+            ✕
+          </button>
+
+        </div>
+
+      </div>
+
+      `
+    ).join("");
+
+
+  const total =
+    cart.reduce(
+      (sum,product) =>
+        sum +
+        product.price *
+        product.qty,
+      0
+    );
+
+
+  $("#cartTotal").textContent =
+    money(total) + " COP";
+
+}
+
+
+/* CAMBIAR CANTIDAD */
+
+window.changeQty =
+  function(index,difference){
+
+    cart[index].qty +=
+      difference;
+
+
+    if(cart[index].qty <= 0){
+
+      cart.splice(index,1);
+
+    }
+
+
+    saveCart();
+
+    renderCart();
+
+  };
+
+
+/* ELIMINAR */
+
+window.removeItem =
+  function(index){
+
+    cart.splice(index,1);
+
+    saveCart();
+
+    renderCart();
+
+    toast(
+      "Producto eliminado"
+    );
+
+  };
+
+
+/* ABRIR CARRITO */
+
+function openCart(){
+
+  $("#cartDrawer")
+    .classList.add("open");
+
+  $("#overlay")
+    .classList.add("show");
+
+}
+
+
+/* CERRAR CARRITO */
+
+function closeCart(){
+
+  $("#cartDrawer")
+    .classList.remove("open");
+
+  $("#overlay")
+    .classList.remove("show");
+
+}
+
+
+$("#cartBtn")
+  .addEventListener(
+    "click",
+    openCart
+  );
+
+
+$("#closeCart")
+  .addEventListener(
+    "click",
+    closeCart
+  );
+
+
+$("#overlay")
+  .addEventListener(
+    "click",
+    closeCart
+  );
+
+
+/* MODALES */
+
+function showModal(id){
+
+  $("#" + id)
+    .classList.add("show");
+
+}
+
+
+function hideModal(id){
+
+  $("#" + id)
+    .classList.remove("show");
+
+}
+
+
+document
+  .querySelectorAll("[data-close]")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () =>
+        hideModal(
+          button.dataset.close
+        )
+    );
+
+  });
+
+
+/* TOTAL PEDIDO */
+
+$("#qty").addEventListener(
+  "change",
+  () => {
+
+    const quantity =
+      Number(
+        $("#qty").value
+      );
+
+    $("#orderTotal").textContent =
+      money(
+        settings.price *
+        quantity
+      ) + " COP";
+
+  }
+);
+
+
+/* FORMULARIO */
+
+$("#orderForm").addEventListener(
+  "submit",
+  event => {
+
+    event.preventDefault();
+
+
+    const name =
+      $("#customer")
+        .value
+        .trim();
+
+
+    const quantity =
+      Number(
+        $("#qty").value
+      );
+
+
+    const spice =
+      $("#spice").value;
+
+
+    const notes =
+      $("#notes")
+        .value
+        .trim();
+
+
+    $("#summaryContent").innerHTML = `
+
+      <div class="summary-box">
+
+        <div>
+          <b>Cliente:</b>
+          ${escapeHTML(name)}
+        </div>
+
+        <div>
+          <b>Producto:</b>
+          ${escapeHTML(settings.name)}
+        </div>
+
+        <div>
+          <b>Cantidad:</b>
+          ${quantity}
+        </div>
+
+        <div>
+          <b>Nivel de picante:</b>
+          ${escapeHTML(spice)}
+        </div>
+
+        <div>
+          <b>Nota:</b>
+          ${escapeHTML(
+            notes || "Sin nota"
+          )}
+        </div>
+
+        <div>
+          <b>Total:</b>
+          ${money(
+            settings.price *
+            quantity
+          )} COP
+        </div>
+
+      </div>
+
+    `;
+
+
+    showModal(
+      "summaryModal"
+    );
+
+  }
+);
+
+
+/* IR AL PEDIDO */
+
+$("#checkoutBtn")
+  .addEventListener(
+    "click",
+    () => {
+
+      if(!cart.length){
+
+        toast(
+          "Agrega un producto primero"
         );
-
-
-    $("cartCount").textContent =
-        count;
-
-
-    const total =
-        cart.reduce(
-            (sum, item) =>
-                sum +
-                item.qty *
-                item.price,
-
-            0
-        );
-
-
-    $("cartTotal").textContent =
-        money(total);
-
-
-    if (!cart.length) {
-
-        $("items").innerHTML =
-            `
-            <p class="empty">
-                Tu carrito está vacío.
-            </p>
-            `;
 
         return;
 
-    }
+      }
 
 
-    $("items").innerHTML =
-
-        cart.map(
-            (item, index) =>
-
-                `
-                <div class="cart-row">
-
-                    <div>
-
-                        <b>
-                            ${escapeHTML(item.name)}
-                        </b>
-
-                        <br>
-
-                        <button
-                            onclick="changeQuantity(${index}, -1)"
-                        >
-                            −
-                        </button>
-
-                        ${item.qty}
-
-                        <button
-                            onclick="changeQuantity(${index}, 1)"
-                        >
-                            +
-                        </button>
-
-                        <button
-                            onclick="removeItem(${index})"
-                        >
-                            Eliminar
-                        </button>
-
-                    </div>
+      closeCart();
 
 
-                    <b>
-                        ${money(
-                            item.qty *
-                            item.price
-                        )}
-                    </b>
-
-                </div>
-                `
-
-        ).join("");
-
-}
-
-
-/* ==========================================
-   CAMBIAR CANTIDAD
-========================================== */
-
-window.changeQuantity =
-function(index, change) {
-
-    cart[index].qty +=
-        change;
-
-
-    if (
-        cart[index].qty <= 0
-    ) {
-
-        cart.splice(
-            index,
-            1
+      $("#qty").value =
+        Math.min(
+          cart.reduce(
+            (sum,product) =>
+              sum + product.qty,
+            0
+          ),
+          5
         );
+
+
+      $("#orderTotal")
+        .textContent =
+        money(
+          settings.price *
+          Number(
+            $("#qty").value
+          )
+        ) + " COP";
+
+
+      document
+        .querySelector("#pedido")
+        .scrollIntoView({
+          behavior:"smooth"
+        });
 
     }
+  );
 
 
-    localStorage.setItem(
-        "gomixCart",
-        JSON.stringify(cart)
-    );
+/* ADMIN */
 
-
-    renderCart();
-
-};
-
-
-/* ==========================================
-   ELIMINAR PRODUCTO
-========================================== */
-
-window.removeItem =
-function(index) {
-
-    cart.splice(
-        index,
-        1
-    );
-
-
-    localStorage.setItem(
-        "gomixCart",
-        JSON.stringify(cart)
-    );
-
-
-    renderCart();
-
-};
-
-
-/* ==========================================
-   BOTÓN CARRITO
-========================================== */
-
-$("cartBtn").onclick =
+$("#adminBtn")
+  .addEventListener(
+    "click",
     () => {
 
-        overlay("cart");
+      $("#adminPassword")
+        .value = "";
 
-    };
+      $("#loginError")
+        .textContent = "";
 
+      $("#loginBox")
+        .hidden = false;
 
-/* ==========================================
-   CERRAR MODALES
-========================================== */
+      $("#adminPanel")
+        .hidden = true;
 
-document
-    .querySelectorAll(
-        "[data-close]"
-    )
-    .forEach(button => {
+      showModal(
+        "adminModal"
+      );
 
-        button.onclick = () => {
-
-            overlay(
-                button.dataset.close,
-                false
-            );
-
-        };
-
-    });
+    }
+  );
 
 
-/* ==========================================
-   CANTIDAD DEL PEDIDO
-========================================== */
+/* LOGIN ADMIN */
 
-$("qty").oninput =
+$("#loginBtn")
+  .addEventListener(
+    "click",
     () => {
 
-        const quantity =
-            +$("qty").value || 1;
+      const password =
+        $("#adminPassword")
+          .value;
 
 
-        $("total").textContent =
-            money(
-                quantity *
-                settings.price
-            );
+      if(password === ADMIN_PASSWORD){
 
-    };
+        $("#loginBox")
+          .hidden = true;
 
-
-/* ==========================================
-   FORMULARIO DE PEDIDO
-========================================== */
-
-$("form").onsubmit =
-    event => {
-
-        event.preventDefault();
+        $("#adminPanel")
+          .hidden = false;
 
 
-        const quantity =
-            +$("qty").value || 1;
+        $("#editName")
+          .value =
+          settings.name;
 
 
-        const customer =
-            $("name").value;
+        $("#editPrice")
+          .value =
+          settings.price;
 
 
-        const spice =
-            $("spice").value;
+        $("#editDesc")
+          .value =
+          settings.desc;
 
 
-        const notes =
-            $("notes").value ||
-            "Sin notas";
+        $("#editSlogan")
+          .value =
+          settings.slogan;
 
 
-        $("summaryText").innerHTML =
+      }else{
 
-            `
-            <div>
-                <span>Cliente</span>
-                <b>
-                    ${escapeHTML(customer)}
-                </b>
-            </div>
+        $("#loginError")
+          .textContent =
+          "Contraseña incorrecta.";
 
-            <div>
-                <span>Producto</span>
-                <b>
-                    ${escapeHTML(
-                        settings.name
-                    )}
-                </b>
-            </div>
+      }
 
-            <div>
-                <span>Cantidad</span>
-                <b>
-                    ${quantity}
-                </b>
-            </div>
-
-            <div>
-                <span>Picante</span>
-                <b>
-                    ${escapeHTML(spice)}
-                </b>
-            </div>
-
-            <div>
-                <span>Nota</span>
-                <b>
-                    ${escapeHTML(notes)}
-                </b>
-            </div>
-
-            <div>
-                <span>Total</span>
-                <b>
-                    ${money(
-                        quantity *
-                        settings.price
-                    )}
-                </b>
-            </div>
-            `;
+    }
+  );
 
 
-        overlay(
-            "summary"
-        );
+/* GUARDAR CAMBIOS */
 
-    };
-
-
-/* ==========================================
-   CONTINUAR DEL CARRITO
-========================================== */
-
-$("goOrder").onclick =
+$("#saveSettings")
+  .addEventListener(
+    "click",
     () => {
 
-        if (!cart.length) {
+      settings = {
 
-            toast(
-                "Agrega un producto primero"
-            );
+        name:
+          $("#editName")
+            .value
+            .trim()
+          || DEFAULTS.name,
 
-            return;
+        price:
+          Number(
+            $("#editPrice").value
+          )
+          || DEFAULTS.price,
 
-        }
+        desc:
+          $("#editDesc")
+            .value
+            .trim()
+          || DEFAULTS.desc,
 
+        slogan:
+          $("#editSlogan")
+            .value
+            .trim()
+          || DEFAULTS.slogan
 
-        const quantity =
-            cart.reduce(
-                (sum, item) =>
-                    sum + item.qty,
-
-                0
-            );
-
-
-        $("qty").value =
-            quantity;
-
-
-        $("qty").dispatchEvent(
-            new Event("input")
-        );
-
-
-        overlay(
-            "cart",
-            false
-        );
+      };
 
 
-        document
-            .querySelector("#pedido")
-            .scrollIntoView({
-                behavior: "smooth"
-            });
+      saveSettings();
 
-    };
+      applySettings();
+
+      toast(
+        "¡Cambios guardados! 🔥"
+      );
+
+      hideModal(
+        "adminModal"
+      );
+
+    }
+  );
 
 
-/* ==========================================
-   ADMINISTRADOR
-========================================== */
+/* RESTABLECER */
 
-$("adminBtn").onclick =
+$("#resetSettings")
+  .addEventListener(
+    "click",
     () => {
 
-        overlay(
-            "admin"
-        );
-
-    };
+      settings =
+        {...DEFAULTS};
 
 
-/* ==========================================
-   LOGIN
-========================================== */
+      saveSettings();
 
-$("loginBtn").onclick =
-    () => {
-
-        const password =
-            $("pass").value;
+      applySettings();
 
 
-        if (
-            password ===
-            ADMIN_PASSWORD
-        ) {
+      $("#editName")
+        .value =
+        settings.name;
 
-            $("login").hidden =
-                true;
+      $("#editPrice")
+        .value =
+        settings.price;
 
+      $("#editDesc")
+        .value =
+        settings.desc;
 
-            $("panel").hidden =
-                false;
-
-
-            $("pass").value =
-                "";
-
-
-            toast(
-                "Acceso concedido 🔐"
-            );
-
-        } else {
-
-            $("error").textContent =
-                "Contraseña incorrecta.";
-
-        }
-
-    };
+      $("#editSlogan")
+        .value =
+        settings.slogan;
 
 
-/* ==========================================
-   GUARDAR CAMBIOS DEL ADMIN
-========================================== */
+      toast(
+        "Valores restablecidos"
+      );
 
-$("save").onclick =
-    () => {
-
-        settings = {
-
-            name:
-                $("eName")
-                    .value
-                    .trim()
-                ||
-                DEFAULTS.name,
+    }
+  );
 
 
-            price:
-                +$("ePrice").value
-                ||
-                DEFAULTS.price,
-
-
-            desc:
-                $("eDesc")
-                    .value
-                    .trim()
-                ||
-                DEFAULTS.desc,
-
-
-            slogan:
-                $("eSlogan")
-                    .value
-                    .trim()
-                ||
-                DEFAULTS.slogan
-
-        };
-
-
-        saveSettings();
-
-
-        $("saved").textContent =
-            "Cambios guardados correctamente.";
-
-
-        toast(
-            "Gomix actualizado ✨"
-        );
-
-    };
-
-
-/* ==========================================
-   RESTABLECER
-========================================== */
-
-$("reset").onclick =
-    () => {
-
-        settings =
-            { ...DEFAULTS };
-
-
-        saveSettings();
-
-
-        $("saved").textContent =
-            "Valores restaurados.";
-
-    };
-
-
-/* ==========================================
-   INICIAR
-========================================== */
+/* INICIAR */
 
 applySettings();
 
