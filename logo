@@ -1,4 +1,8 @@
 <a class="brand" href="#inicio">
-  <span class="crown">♛</span>
-  GOMIX
+  <div class="gomix-logo">
+    <div class="logo-crown">♛</div>
+    <div class="logo-name">GOMIX</div>
+    <div class="logo-line"></div>
+    <div class="logo-slogan">ÁCIDO • DULCE • PICANTE</div>
+  </div>
 </a>
