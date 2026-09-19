@@ -1,1 +1,4 @@
-<img src="img/logo.png" alt="Logo Gomix">
+<a class="brand" href="#inicio">
+  <span class="crown">♛</span>
+  GOMIX
+</a>
